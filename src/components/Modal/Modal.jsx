@@ -1,15 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Modal } from 'react-responsive-modal';
 import 'components/Modal/styles.css';
 
 export const ModalWindow = ({ largeImage, largeImageStateReset }) => {
   const [open, setOpen] = useState(true);
-
-  // const onOpenModal = () => {
-  //   if (largeImage) {
-  //     setOpen(true);
-  //   }
-  // };
 
   const onCloseModal = () => {
     if (largeImage) {
@@ -21,7 +15,6 @@ export const ModalWindow = ({ largeImage, largeImageStateReset }) => {
 
   return (
     <div>
-      {/* <button onClick={onOpenModal}>Open modal</button> */}
       <Modal
         open={open}
         onClose={onCloseModal}
