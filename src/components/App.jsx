@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import { fetchQuery } from 'services/api';
 import { Searchbar } from 'components/Searchbar/Searchbar';
@@ -9,86 +9,82 @@ import { ModalWindow } from 'components/Modal/Modal';
 import { Container } from 'components/App.styled';
 import 'react-toastify/dist/ReactToastify.css';
 
-class App extends Component {
-  state = {
-    searchQuery: '',
-    images: [],
-    page: 1,
-    totalImages: 0,
-    loading: false,
-    largeImage: '',
-  };
+export default function App() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalImages, setTotalImages] = useState(0);
+  const [largeImage, setLargeImage] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  componentDidUpdate(prevProps, prevState) {
-    const { searchQuery, page } = this.state;
-
-    if (prevState.searchQuery !== searchQuery || prevState.page !== page) {
-      this.setState({ loading: true });
-
-      fetchQuery(searchQuery, page)
-        .then(resp =>
-          this.setState(prevState => ({
-            images: [...prevState.images, ...resp.images],
-            totalImages: resp.TotalHits,
-          }))
-        )
-        .catch(error => console.log(error))
-        .finally(() => this.setState({ loading: false }));
+  useEffect(() => {
+    if (!searchQuery) {
+      return;
     }
-  }
 
-  searchQueryValue = value => {
-    if (value === this.state.searchQuery) {
+    setLoading(true);
+
+    fetchQuery(searchQuery, page)
+      .then(resp => {
+        if (resp.images.length === 0) {
+          toast.warn(
+            'Sorry, there are no images matching your search query. Please try again.'
+          );
+          setLoading(false);
+          return;
+        }
+
+        setImages([...images, ...resp.images]);
+        setTotalImages(resp.TotalHits);
+        setLoading(false);
+      })
+      .catch(error => console.log(error));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, searchQuery]);
+
+  const searchQueryValue = value => {
+    if (value === searchQuery) {
       toast.warn('Enter another search query!');
       return;
     }
 
-    this.setState({
-      searchQuery: value,
-      page: 1,
-      totalImages: 0,
-      images: [],
-      showLoadMoreBtn: false,
-    });
+    setSearchQuery(value);
+    setPage(1);
+    setTotalImages(0);
+    setImages([]);
+    // showLoadMoreBtn(false);
   };
 
-  getModalImage = imageUrl => {
-    this.setState({ largeImage: imageUrl });
+  const getModalImage = imageUrl => {
+    setLargeImage(imageUrl);
   };
 
-  largeImageStateReset = () => {
-    this.setState({ largeImage: '' });
+  const largeImageStateReset = () => {
+    setLargeImage('');
   };
 
-  handleLoadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const handleLoadMore = () => {
+    setPage(page + 1);
   };
 
-  render() {
-    const { images, largeImage, loading, totalImages } = this.state;
+  return (
+    <Container>
+      <Searchbar onSubmit={searchQueryValue} />
 
-    return (
-      <Container>
-        <Searchbar onSubmit={this.searchQueryValue} />
-        <ImageGallery images={images} getModalImage={this.getModalImage} />
-        {loading && <Loader />}
-        {totalImages !== images.length && (
-          <Button onClick={this.handleLoadMore} />
-        )}
+      <ImageGallery images={images} getModalImage={getModalImage} />
 
-        <ToastContainer position="top-center" autoClose={1500} />
+      {loading && <Loader />}
 
-        {largeImage && (
-          <ModalWindow
-            largeImage={largeImage}
-            largeImageStateReset={this.largeImageStateReset}
-          />
-        )}
-      </Container>
-    );
-  }
+      {totalImages !== images.length && <Button onClick={handleLoadMore} />}
+
+      <ToastContainer position="top-center" autoClose={1500} />
+
+      {largeImage && (
+        <ModalWindow
+          largeImage={largeImage}
+          largeImageStateReset={largeImageStateReset}
+        />
+      )}
+    </Container>
+  );
 }
-
-export default App;
