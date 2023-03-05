@@ -34,7 +34,7 @@ export default function App() {
           return;
         }
 
-        setImages([...images, ...resp.images]);
+        setImages(prevImage => [...prevImage, ...resp.images]);
         setTotalImages(resp.TotalHits);
         setLoading(false);
       })
@@ -64,7 +64,7 @@ export default function App() {
   };
 
   const handleLoadMore = () => {
-    setPage(page + 1);
+    setPage(prevPage => prevPage + 1);
   };
 
   return (
